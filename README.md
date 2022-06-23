@@ -1,0 +1,1 @@
+# azure-private-ops-lab-generator
