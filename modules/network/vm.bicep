@@ -1,12 +1,12 @@
-param hubLocation string
+param netLocation string
 param adminUserName string
 @secure()
 param adminPassword string
-param hubVnetId string
+param netVnetId string
 
 resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
-  name: 'nsg-hubvm-opslab'
-  location: hubLocation
+  name: 'nsg-opslab-eval'
+  location: netLocation
   properties: {
     securityRules: [
       {
@@ -26,9 +26,9 @@ resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   }
 }
 
-resource hubTestVm01Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
-  name: 'nic-hubvm01-opslab'
-  location: hubLocation
+resource netTestVm01Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+  name: 'nic-vm01-opslab-eval'
+  location: netLocation
   properties: {
     ipConfigurations: [
       {
@@ -38,7 +38,7 @@ resource hubTestVm01Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '192.168.4.100'
           subnet: {
-            id: '${hubVnetId}/subnets/iaasSubnet'
+            id: '${netVnetId}/subnets/iaasSubnet'
           }
         }
       }
@@ -49,9 +49,9 @@ resource hubTestVm01Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   }
 }
 
-resource hubTestVm02Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
-  name: 'nic-hubvm02-opslab'
-  location: hubLocation
+resource netTestVm02Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+  name: 'nic-vm02-opslab-eval'
+  location: netLocation
   properties: {
     ipConfigurations: [
       {
@@ -61,7 +61,7 @@ resource hubTestVm02Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '192.168.4.101'
           subnet: {
-            id: '${hubVnetId}/subnets/iaasSubnet'
+            id: '${netVnetId}/subnets/iaasSubnet'
           }
         }
       }
@@ -72,12 +72,12 @@ resource hubTestVm02Nic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   }
 }
 
-resource hubTestVM1 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: 'vm01-hub-opslab'
-  location: hubLocation
+resource netTestVM1 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+  name: 'vm01-opslab-eval'
+  location: netLocation
   properties: {
     osProfile: {
-      computerName: 'hubTestVM01'
+      computerName: 'netTestVM01'
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -102,7 +102,7 @@ resource hubTestVM1 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: hubTestVm01Nic.id
+          id: netTestVm01Nic.id
           properties: {
             primary: true
           }
@@ -112,12 +112,12 @@ resource hubTestVM1 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource hubTestVM2 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: 'vm02-hub-opslab'
-  location: hubLocation
+resource netTestVM2 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+  name: 'vm02-opslab-eval'
+  location: netLocation
   properties: {
     osProfile: {
-      computerName: 'hubTestVM02'
+      computerName: 'netTestVM02'
       adminUsername: adminUserName
       adminPassword: adminPassword
     }
@@ -142,7 +142,7 @@ resource hubTestVM2 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: hubTestVm02Nic.id
+          id: netTestVm02Nic.id
           properties: {
             primary: true
           }

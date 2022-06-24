@@ -1,10 +1,10 @@
 param bastionLocation string
-param hubVnetId string
+param netVnetId string
 param mgmtLoganalyticsId string
 
-resource hubBastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource netBastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   location: bastionLocation
-  name: 'pip-hubbas-eval'
+  name: 'pip-bas-opslab-eval'
   sku: {
     name: 'Standard'
     tier: 'Regional'
@@ -14,8 +14,8 @@ resource hubBastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   }
 }
 
-resource hubBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
-  name: 'bas-hub-eval'
+resource netBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
+  name: 'bas-opslab-eval'
   location: bastionLocation
   sku: {
     name: 'Standard'
@@ -31,10 +31,10 @@ resource hubBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
         name: 'ipconfig'
         properties: {
           publicIPAddress: {
-            id: hubBastionPip.id
+            id: netBastionPip.id
           }
           subnet: {
-            id: '${hubVnetId}/subnets/AzureBastionSubnet'
+            id: '${netVnetId}/subnets/AzureBastionSubnet'
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -43,9 +43,9 @@ resource hubBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
   }
 }
 
-resource hubBastionDiagsetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'hubBastionDiagsetting'
-  scope: hubBastion
+resource netBastionDiagsetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'netBastionDiagsetting'
+  scope: netBastion
   properties: {
     workspaceId: mgmtLoganalyticsId
     logs: [

@@ -2,7 +2,7 @@ param laLocation string
 
 resource mgmtLa 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   location: laLocation
-  name: 'log-mgmt-opslab'
+  name: 'log-opslab-eval'
   properties: {
     sku: {
       name: 'PerGB2018'
@@ -16,7 +16,7 @@ resource mgmtLa 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = 
 
 resource mgmtAmpls 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = {
   location: 'global'
-  name: 'ampls-mgmt-opslab'
+  name: 'ampls-opslab-eval'
   properties: {
     accessModeSettings: {
       ingestionAccessMode: 'PrivateOnly'
@@ -25,17 +25,11 @@ resource mgmtAmpls 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = {
   }
 }
 
-resource mgmtAmplsScopeToLa 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
-  parent: mgmtAmpls
-  name: 'amplsscopetola-mgmt-opslab'
-  properties: {
-    linkedResourceId: mgmtLa.id
-  }
-}
+
 
 resource mgmtDce 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   location: laLocation
-  name: 'dce-mgnt-opslab'
+  name: 'dce-opslab-eval'
   kind: 'Windows'
   properties: {
     networkAcls: {
@@ -44,17 +38,9 @@ resource mgmtDce 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   }
 }
 
-resource mgmtAmplsScopeToDce 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
-  parent: mgmtAmpls
-  name: 'amplsscopetodcs-mgmt-opslab'
-  properties: {
-    linkedResourceId: mgmtDce.id
-  }
-}
-
 resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
   location: laLocation
-  name: 'dcr-mgnt-opslab'
+  name: 'dcr-opslab-eval'
   kind: 'Windows'
   properties: {
     dataSources: {
@@ -160,6 +146,21 @@ resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
   }
 }
 
+resource mgmtAmplsScopeToLa 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
+  parent: mgmtAmpls
+  name: 'amplscopetola-opslab-eval'
+  properties: {
+    linkedResourceId: mgmtLa.id
+  }
+}
+
+resource mgmtAmplsScopeToDce 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
+  parent: mgmtAmpls
+  name: 'amplsscopetodcs-opslab-eval'
+  properties: {
+    linkedResourceId: mgmtDce.id
+  }
+}
 
 
 output mgmtLoganalyticsId string = mgmtLa.id

@@ -7,8 +7,8 @@ param adminPassword string
 
 // Create Resource Groups
 
-resource rgHubVnet 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: 'rg-hubVnet-opslab'
+resource rgnetVnet 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+  name: 'rg-netVnet-opslab'
   location: envLocation
 }
 
@@ -37,39 +37,47 @@ module mgmtAuto 'modules/management/automationAccount.bicep' = {
   }
 }
 
-// Create Vnets
+// Create Vnets and private Endpoint
 
-module hubVnet 'modules/hub/hubVnet.bicep' = {
-  name: 'hubVnet-opslab'
-  scope: rgHubVnet
+module netVnet 'modules/network/vnet.bicep' = {
+  name: 'netVnet-opslab'
+  scope: rgnetVnet
   params: {
-    hubLocation: envLocation
+    netLocation: envLocation
     amplsId: mgmtLog.outputs.mgmtAmplsId
   }
 }
 
-// Create Azure Firewall in Hub Vnet
 
-// Create Azure Bastion in Hub Vnet
+module privateDnsZone 'modules/network/privateDnsZone.bicep' = {
+  name: 'privateDnsZone-opslab'
+  scope: rgnetVnet
+  params: {
+    peAmplsCustomDnsConfigs: netVnet.outputs.peAmplsCustomDnsConfigs
+  }
+}
 
-module hubBastion 'modules/hub/hubBastion.bicep' = {
-  name: 'hubBastion'
-  scope: rgHubVnet
+
+
+/*
+module netBastion 'modules/network/bastion.bicep' = {
+  name: 'netBastion'
+  scope: rgnetVnet
   params: {
     bastionLocation: envLocation
-    hubVnetId: hubVnet.outputs.hubVnetId
+    netVnetId: netVnet.outputs.netVnetId
     mgmtLoganalyticsId: mgmtLog.outputs.mgmtLoganalyticsId
   }
 }
 
-module HubVm 'modules/hub/hubVm.bicep' = {
-  name: 'spokeVmMMA'
-  scope: rgHubVnet
+module netVm 'modules/network/vm.bicep' = {
+  name: 'netVmMMA'
+  scope: rgnetVnet
   params: {
-    hubLocation: envLocation
+    netLocation: envLocation
     adminUserName: adminUsername
     adminPassword: adminPassword
-    hubVnetId: hubVnet.outputs.hubVnetId
+    netVnetId: netVnet.outputs.netVnetId
   }
 }
-
+*/

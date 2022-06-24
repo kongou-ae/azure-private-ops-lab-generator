@@ -1,9 +1,9 @@
-param hubLocation string
+param netLocation string
 param amplsId string
 
-resource hubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
-  name: 'vnet-hub-opslab'
-  location: hubLocation
+resource netVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+  name: 'vnet-opslab-eval'
+  location: netLocation
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -46,15 +46,15 @@ resource hubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
 }
 
 resource peAmpls 'Microsoft.Network/privateEndpoints@2021-08-01' = {
-  name: 'peampls-hub-opslab'
-  location: hubLocation
+  name: 'peampls-opslab-eval'
+  location: netLocation
   properties: {
     subnet: {
-      id: '${hubVnet.id}/subnets/peAmplsSubnet'
+      id: '${netVnet.id}/subnets/peAmplsSubnet'
     }
     privateLinkServiceConnections: [
       {
-        name:'peampls-hub-opslab'
+        name:'peampls-net-opslab'
         properties: {
           groupIds: [
             'azuremonitor'
@@ -66,4 +66,5 @@ resource peAmpls 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   }
 }
 
-output hubVnetId string = hubVnet.id
+output netVnetId string = netVnet.id
+output peAmplsCustomDnsConfigs array = peAmpls.properties.customDnsConfigs
