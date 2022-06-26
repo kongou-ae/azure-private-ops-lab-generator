@@ -1,8 +1,9 @@
 param laLocation string
+param autoName string
 
 resource mgmtAutomation 'Microsoft.Automation/automationAccounts@2021-06-22' = {
   location: laLocation
-  name: 'auto-opslab-eval'
+  name: autoName
   properties: {
     sku: {
       name: 'Basic'

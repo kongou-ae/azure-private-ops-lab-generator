@@ -1,10 +1,11 @@
 param bastionLocation string
 param netVnetId string
 param mgmtLoganalyticsId string
+param basName string
 
-resource netBastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource bastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   location: bastionLocation
-  name: 'pip-bas-opslab-eval'
+  name: 'pip-${basName}'
   sku: {
     name: 'Standard'
     tier: 'Regional'
@@ -14,8 +15,8 @@ resource netBastionPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   }
 }
 
-resource netBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
-  name: 'bas-opslab-eval'
+resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
+  name: basName
   location: bastionLocation
   sku: {
     name: 'Standard'
@@ -31,7 +32,7 @@ resource netBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
         name: 'ipconfig'
         properties: {
           publicIPAddress: {
-            id: netBastionPip.id
+            id: bastionPip.id
           }
           subnet: {
             id: '${netVnetId}/subnets/AzureBastionSubnet'
@@ -43,9 +44,9 @@ resource netBastion 'Microsoft.Network/bastionHosts@2021-08-01' = {
   }
 }
 
-resource netBastionDiagsetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource bastionDiagsetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'netBastionDiagsetting'
-  scope: netBastion
+  scope: bastion
   properties: {
     workspaceId: mgmtLoganalyticsId
     logs: [

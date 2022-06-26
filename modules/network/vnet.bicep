@@ -1,8 +1,18 @@
 param netLocation string
 param amplsId string
+param vnetName string
+param peAmplsName string
 
-resource netVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
-  name: 'vnet-opslab-eval'
+param zones array = [
+  'monitor.azure.com'
+  'oms.opinsights.azure.com'
+  'ods.opinsights.azure.com'
+  'agentsvc.azure-automation.net'
+  'blob.core.windows.net'
+]
+
+resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+  name: vnetName
   location: netLocation
   properties: {
     addressSpace: {
@@ -46,15 +56,15 @@ resource netVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
 }
 
 resource peAmpls 'Microsoft.Network/privateEndpoints@2021-08-01' = {
-  name: 'peampls-opslab-eval'
+  name: peAmplsName
   location: netLocation
   properties: {
     subnet: {
-      id: '${netVnet.id}/subnets/peAmplsSubnet'
+      id: '${vnet.id}/subnets/peAmplsSubnet'
     }
     privateLinkServiceConnections: [
       {
-        name:'peampls-net-opslab'
+        name: 'conn-${peAmplsName}'
         properties: {
           groupIds: [
             'azuremonitor'
@@ -66,5 +76,82 @@ resource peAmpls 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   }
 }
 
-output netVnetId string = netVnet.id
-output peAmplsCustomDnsConfigs array = peAmpls.properties.customDnsConfigs
+resource privateDnsZoneForAmpls 'Microsoft.Network/privateDnsZones@2020-06-01' = [for zone in zones: {
+  location: 'global'
+  name: 'privatelink.${zone}'
+  properties: {
+  }
+}]
+
+resource privateDnsZoneForAmplsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01'  = [for (zone,i) in zones: {
+  name: 'privateDnsZoneForAmplsVnetLink${i}'
+  location: 'global'
+  parent: privateDnsZoneForAmpls[i]
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnet.id
+    }
+  }
+}]
+
+resource privateDnsZoneForMonitor 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: 'privatelink.${zones[0]}'
+}
+
+resource privateDnsZoneForOms 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: 'privatelink.${zones[1]}'
+}
+
+resource privateDnsZoneForOds 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: 'privatelink.${zones[2]}'
+}
+
+resource privateDnsZoneForAgentsvc 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: 'privatelink.${zones[3]}'
+}
+
+resource privateDnsZoneForBlob 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: 'privatelink.${zones[4]}'
+}
+
+resource pvtEndpointDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+  parent: peAmpls
+  name: 'pvtEndpointDnsGroupForAmpls'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForMonitor.id
+        }
+      }
+      {
+        name: 'config2'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForOms.id
+        }
+      }
+      {
+        name: 'config3'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForOds.id
+        }
+      }
+      {
+        name: 'config4'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForAgentsvc.id
+        }
+      }
+      {
+        name: 'config5'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForBlob.id
+        }
+      }
+    ]
+  }
+}
+
+output vnetId string = vnet.id

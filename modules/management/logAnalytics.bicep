@@ -1,8 +1,13 @@
 param laLocation string
+param logName string
+param amplsName string
+param dceName string
+param dcrWinName string
+param dcrLinuxName string
 
-resource mgmtLa 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+resource log 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   location: laLocation
-  name: 'log-opslab-eval'
+  name: logName
   properties: {
     sku: {
       name: 'PerGB2018'
@@ -11,12 +16,11 @@ resource mgmtLa 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = 
     publicNetworkAccessForIngestion: 'Disabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
-
 }
 
-resource mgmtAmpls 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = {
+resource ampls 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = {
   location: 'global'
-  name: 'ampls-opslab-eval'
+  name: amplsName
   properties: {
     accessModeSettings: {
       ingestionAccessMode: 'PrivateOnly'
@@ -25,11 +29,9 @@ resource mgmtAmpls 'Microsoft.Insights/privateLinkScopes@2021-07-01-preview' = {
   }
 }
 
-
-
-resource mgmtDce 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
+resource dceWin 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   location: laLocation
-  name: 'dce-opslab-eval'
+  name: '${dceName}-win'
   kind: 'Windows'
   properties: {
     networkAcls: {
@@ -38,9 +40,21 @@ resource mgmtDce 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   }
 }
 
-resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+resource dceLinux 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   location: laLocation
-  name: 'dcr-opslab-eval'
+  name: '${dceName}-linux'
+  kind: 'Linux'
+  properties: {
+    networkAcls: {
+      publicNetworkAccess: 'Disabled'
+    }
+  }
+}
+
+// not work. dataCollectionEndpointId in japaneast may not be support by 2021-09-01-preview which supports dataCollectionEndpointId.
+resource dcrWin 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+  location: laLocation
+  name: dcrWinName
   kind: 'Windows'
   properties: {
     dataSources: {
@@ -119,8 +133,8 @@ resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
     destinations: {
       logAnalytics: [
         {
-          workspaceResourceId: mgmtLa.id
-          name: 'log-mgmt-opslab'
+          workspaceResourceId: log.id
+          name: 'log-pops-eval'
         }
       ]
     }
@@ -130,7 +144,7 @@ resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
           'Microsoft-Perf'
         ]
         destinations: [
-          'log-mgmt-opslab'
+          'log-pops-eval'
         ]
       }
       {
@@ -138,30 +152,126 @@ resource mgmtDcr 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
           'Microsoft-Event'
         ]
         destinations: [
-          'log-mgmt-opslab'
+          'log-pops-eval'
         ]
       }
     ]
-    dataCollectionEndpointId: mgmtDce.id
+    dataCollectionEndpointId: dceWin.id
   }
 }
 
-resource mgmtAmplsScopeToLa 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
-  parent: mgmtAmpls
-  name: 'amplscopetola-opslab-eval'
+resource dcrLinux 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+  location: laLocation
+  name: dcrLinuxName
+  kind: 'Linux'
   properties: {
-    linkedResourceId: mgmtLa.id
+    dataSources: {
+      performanceCounters: [
+        {
+          name: 'Microsoft-Perf'
+          streams: [
+            'Microsoft-Perf'
+          ]
+          samplingFrequencyInSeconds: 30
+          counterSpecifiers: [
+            'Logical Disk(*)\\Free Megabytes'
+            'Logical Disk(*)\\% Free Space'
+            'Processor(*)\\% Processor Time'
+            'Memory(*)\\Available MBytes Memory'
+            'Memory(*)\\% Available Memory'
+            'Memory(*)\\Used Memory MBytes'
+            'Memory(*)\\% Used Memory'
+          ]
+        }
+      ]
+      syslog: [
+        {
+          streams: [
+            'Microsoft-Syslog'
+          ]
+          name: 'Microsoft-Syslog-syslog'
+          facilityNames: [
+            'syslog'
+          ]
+          logLevels: [
+            'Alert'
+          ]
+        }
+        {
+          streams: [
+            'Microsoft-Syslog'
+          ]
+          name: 'Microsoft-Syslog-daemon'
+          facilityNames: [
+            'daemon'
+          ]
+          logLevels: [
+            'Alert'
+          ]
+        }
+
+      ]
+    }
+    destinations: {
+      logAnalytics: [
+        {
+          workspaceResourceId: log.id
+          name: 'log-pops-eval'
+        }
+      ]
+    }
+    dataFlows: [
+      {
+        streams: [
+          'Microsoft-Perf'
+        ]
+        destinations: [
+          'log-pops-eval'
+        ]
+      }
+      {
+        streams: [
+          'Microsoft-Syslog'
+        ]
+        destinations: [
+          'log-pops-eval'
+        ]
+      }
+    ]
+    dataCollectionEndpointId: dceLinux.id
   }
 }
 
-resource mgmtAmplsScopeToDce 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
-  parent: mgmtAmpls
-  name: 'amplsscopetodcs-opslab-eval'
+resource AmplsScopeToLa 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
+  parent: ampls
+  name: 'amplslink_${logName}'
   properties: {
-    linkedResourceId: mgmtDce.id
+    linkedResourceId: log.id
+  }
+}
+
+resource AmplsScopeToDceWin 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
+  parent: ampls
+  name: 'amplslink_${dceName}-win'
+  properties: {
+    linkedResourceId: dceWin.id
+  }
+}
+
+resource AmplsScopeToDceLinux 'Microsoft.Insights/privateLinkScopes/scopedResources@2021-07-01-preview' = {
+  parent: ampls
+  name: 'amplslink_${dceName}-linux'
+  properties: {
+    linkedResourceId: dceLinux.id
   }
 }
 
 
-output mgmtLoganalyticsId string = mgmtLa.id
-output mgmtAmplsId string = mgmtAmpls.id
+output loganalyticsId string = log.id
+output amplsId string = ampls.id
+output dcrWinId string = dcrWin.id
+output dcrLinuxId string = dcrLinux.id
+output dceWinId string = dceWin.id
+output dceLinuxId string = dceLinux.id
+output logWorkspaceId string = log.properties.customerId
+output logKey string = listKeys(log.id, '2021-12-01-preview').primarySharedKey
