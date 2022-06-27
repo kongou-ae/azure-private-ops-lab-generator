@@ -1,7 +1,9 @@
 param netLocation string
 param amplsId string
+param autoId string
 param vnetName string
 param peAmplsName string
+param peAutoName string
 
 param zones array = [
   'monitor.azure.com'
@@ -10,7 +12,6 @@ param zones array = [
   'agentsvc.azure-automation.net'
   'blob.${environment().suffixes.storage}'
 ]
-
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: vnetName
@@ -136,6 +137,49 @@ resource pvtEndpointDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/private
         name: 'config5'
         properties: {
           privateDnsZoneId: privateDnsZoneForAmpls[4].id
+        }
+      }
+    ]
+  }
+}
+
+resource peAuto 'Microsoft.Network/privateEndpoints@2021-08-01' = {
+  name: peAutoName
+  location: netLocation
+  properties: {
+    subnet: {
+      id: '${vnet.id}/subnets/peAutoSubnet'
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'conn-${peAutoName}'
+        properties: {
+          groupIds: [
+            'DSCAndHybridWorker'
+          ]
+          privateLinkServiceId: autoId
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZoneForAuto 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  location: 'global'
+  name: 'privatelink.azure-automation.net'
+  properties: {
+  }
+}
+
+resource pvtEndpointDnsGroupForAuto 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+  parent: peAuto
+  name: 'pvtEndpointDnsGroupForAuto'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneForAuto.id
         }
       }
     ]

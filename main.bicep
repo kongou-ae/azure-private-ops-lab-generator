@@ -14,6 +14,7 @@ var dceName = 'dce${suffix}'
 var dcrWinName = 'dcrWin${suffix}'
 var dcrLinuxName = 'dcrLinux${suffix}'
 var peAmplsName = 'peAmpls${suffix}'
+var peAutoName = 'peAuto${suffix}'
 var basName = 'bas${suffix}'
 var nsgName = 'nsg${suffix}'
 var vmName = 'vm${suffix}'
@@ -70,6 +71,8 @@ module vnet 'modules/network/vnet.bicep' = {
     vnetName: vnetName
     peAmplsName: peAmplsName
     amplsId: logMgmt.outputs.amplsId
+    peAutoName: peAutoName
+    autoId: autoMgmt.outputs.automationId
   }
 }
 
