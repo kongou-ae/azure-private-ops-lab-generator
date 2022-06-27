@@ -4,6 +4,7 @@ param amplsName string
 param dceName string
 param dcrWinName string
 param dcrLinuxName string
+param autoId string
 
 resource log 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   location: laLocation
@@ -15,6 +16,14 @@ resource log 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
     retentionInDays: 30
     publicNetworkAccessForIngestion: 'Disabled'
     publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
+resource logLinkForAutomation 'Microsoft.OperationalInsights/workspaces/linkedServices@2020-08-01' = {
+  name: 'Automation' // this name is required. don't custmize it.
+  parent: log
+  properties: {
+    resourceId: autoId
   }
 }
 
@@ -51,7 +60,7 @@ resource dceLinux 'Microsoft.Insights/dataCollectionEndpoints@2021-04-01' = {
   }
 }
 
-// not work. dataCollectionEndpointId in japaneast may not be support by 2021-09-01-preview which supports dataCollectionEndpointId.
+// dataCollectionEndpointId doesn't work. dataCollectionEndpointId in japaneast may not be support by 2021-09-01-preview which supports dataCollectionEndpointId.
 resource dcrWin 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
   location: laLocation
   name: dcrWinName
@@ -123,9 +132,9 @@ resource dcrWin 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
             'Microsoft-Event'
           ]
           xPathQueries: [
-            'Application!*[System[(Level=1 or Level=2 or Level=3)]]'
+            'Application!*[System[(Level=1 or Level=2 or Level=3 or Level=4)]]'
             'Security!*[System[(band(Keywords13510798882111488))]]'
-            'System!*[System[(Level=1 or Level=2 or Level=3)]]'
+            'System!*[System[(Level=1 or Level=2 or Level=3 or Level=4)]]'
           ]
         }
       ]
@@ -156,7 +165,7 @@ resource dcrWin 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
         ]
       }
     ]
-    dataCollectionEndpointId: dceWin.id
+    //dataCollectionEndpointId: dceWin.id
   }
 }
 
@@ -194,7 +203,7 @@ resource dcrLinux 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
             'syslog'
           ]
           logLevels: [
-            'Alert'
+            'Info'
           ]
         }
         {
@@ -206,7 +215,7 @@ resource dcrLinux 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
             'daemon'
           ]
           logLevels: [
-            'Alert'
+            'Info'
           ]
         }
 
@@ -238,7 +247,7 @@ resource dcrLinux 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
         ]
       }
     ]
-    dataCollectionEndpointId: dceLinux.id
+    //dataCollectionEndpointId: dceLinux.id
   }
 }
 
@@ -266,6 +275,211 @@ resource AmplsScopeToDceLinux 'Microsoft.Insights/privateLinkScopes/scopedResour
   }
 }
 
+// Create data souruces for MMA
+resource dataSourceWindowsEventSystem 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsEvent'
+  name: 'WindowsEventSystem'
+  properties: {
+    eventLogName: 'System'
+    eventTypes: [
+      {
+        eventType: 'Error'
+      }
+      {
+        eventType: 'Warning'
+      }
+      {
+        eventType: 'Information'
+      }
+    ]
+  }
+}
+
+resource dataSourceWindowsEventApplication 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsEvent'
+  name: 'WindowsEventApplication'
+  properties: {
+    eventLogName: 'Application'
+    eventTypes: [
+      {
+        eventType: 'Error'
+      }
+      {
+        eventType: 'Warning'
+      }
+      {
+        eventType: 'Information'
+      }
+    ]
+  }
+}
+
+resource dataSourceLinuxSyslog 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'LinuxSyslogCollection'
+  name: 'LinuxSyslogCollection'
+  properties: {
+    state: 'Enabled'
+  }
+}
+
+resource dataSourceLinuxSyslogKernel 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'LinuxSyslog'
+  name: 'LinuxSyslogKernel'
+  properties: {
+    syslogName: 'kern'
+    syslogSeverities: [
+      {
+        severity: 'emerg'
+      }
+      {
+        severity: 'alert'
+      }
+      {
+        severity: 'crit'
+      }
+      {
+        severity: 'err'
+      }
+      {
+        severity: 'warning'
+      }
+      {
+        severity: 'notice'
+      }
+      {
+        severity: 'info'
+      }
+    ]
+  }
+}
+
+resource dataSourceLinuxSyslogSyslog 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'LinuxSyslog'
+  name: 'LinuxSyslogSyslog'
+  properties: {
+    syslogName: 'syslog'
+    syslogSeverities: [
+      {
+        severity: 'emerg'
+      }
+      {
+        severity: 'alert'
+      }
+      {
+        severity: 'crit'
+      }
+      {
+        severity: 'err'
+      }
+      {
+        severity: 'warning'
+      }
+    ]
+  }
+}
+
+resource dataSourceWindowsPerfMemoryAvailableBytes 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsPerformanceCounter'
+  name: 'WindowsPerfMemoryAvailableBytes'
+  properties: {
+    objectName: 'Memory'
+    instanceName: '*'
+    intervalSeconds: 10
+    counterName: 'Available MBytes'
+  }
+}
+
+resource dataSourceWindowsPerfMemoryPercentageBytes 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsPerformanceCounter'
+  name: 'WindowsPerfMemoryPercentageBytes'
+  properties: {
+    objectName: 'Memory'
+    instanceName: '*'
+    intervalSeconds: 10
+    counterName: '% Committed Bytes in Use'
+  }
+}
+
+resource dataSourceWindowsPerfProcessorPercentage 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsPerformanceCounter'
+  name: 'WindowsPerfProcessorPercentage'
+  properties: {
+    objectName: 'Processor'
+    instanceName: '_Total'
+    intervalSeconds: 10
+    counterName: '% Processor Time'
+  }
+}
+
+resource dataSourceWindowsPerfDiskFreeSpacePercentage 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsPerformanceCounter'
+  name: 'WindowsPerfDiskFreeSpacePercentage'
+  properties: {
+    objectName: 'Logical Disk	'
+    instanceName: '*'
+    intervalSeconds: 10
+    counterName: '% Free Space'
+  }
+}
+
+resource dataSourceWindowsPerfDiskUsedSpacePercentage 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'WindowsPerformanceCounter'
+  name: 'WindowsPerfDiskUsedSpacePercentage'
+  properties: {
+    objectName: 'Logical Disk	'
+    instanceName: '*'
+    intervalSeconds: 10
+    counterName: '% Used Space'
+  }
+}
+
+resource dataSourceLinuxPerformanceLogicalDisk 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'LinuxPerformanceObject'
+  name: 'LinuxPerformanceLogicalDisk'
+  properties: {
+    objectName: 'Logical Disk'
+    instanceName: '*'
+    intervalSeconds: 10
+    performanceCounters: [
+      {
+        counterName: 'Free Megabytes'
+      }
+      {
+        counterName: '% Used Space'
+      }
+    ]
+  }
+}
+
+resource dataSourceLinuxPerformanceProcessor 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+  parent: log
+  kind: 'LinuxPerformanceObject'
+  name: 'LinuxPerformanceProcessor'
+  properties: {
+    objectName: 'Processor'
+    instanceName: '*'
+    intervalSeconds: 10
+    performanceCounters: [
+      {
+        counterName: '% Processor Time'
+      }
+      {
+        counterName: '% Privileged Time'
+      }
+    ]
+  }
+}
 
 output loganalyticsId string = log.id
 output amplsId string = ampls.id
@@ -273,5 +487,3 @@ output dcrWinId string = dcrWin.id
 output dcrLinuxId string = dcrLinux.id
 output dceWinId string = dceWin.id
 output dceLinuxId string = dceLinux.id
-output logWorkspaceId string = log.properties.customerId
-output logKey string = listKeys(log.id, '2021-12-01-preview').primarySharedKey

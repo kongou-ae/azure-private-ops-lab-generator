@@ -8,8 +8,9 @@ param zones array = [
   'oms.opinsights.azure.com'
   'ods.opinsights.azure.com'
   'agentsvc.azure-automation.net'
-  'blob.core.windows.net'
+  'blob.${environment().suffixes.storage}'
 ]
+
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: vnetName
@@ -51,6 +52,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
           addressPrefix: '192.168.6.0/24'
         }
       }
+      {
+        name: 'peArmSubnet'
+        properties: {
+          addressPrefix: '192.168.7.0/24'
+        }
+      }
     ]
   }
 }
@@ -83,7 +90,8 @@ resource privateDnsZoneForAmpls 'Microsoft.Network/privateDnsZones@2020-06-01' =
   }
 }]
 
-resource privateDnsZoneForAmplsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01'  = [for (zone,i) in zones: {
+// Connect Private Dns Zones to VNet
+resource privateDnsZoneForAmplsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (zone, i) in zones: {
   name: 'privateDnsZoneForAmplsVnetLink${i}'
   location: 'global'
   parent: privateDnsZoneForAmpls[i]
@@ -95,26 +103,6 @@ resource privateDnsZoneForAmplsVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }]
 
-resource privateDnsZoneForMonitor 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: 'privatelink.${zones[0]}'
-}
-
-resource privateDnsZoneForOms 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: 'privatelink.${zones[1]}'
-}
-
-resource privateDnsZoneForOds 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: 'privatelink.${zones[2]}'
-}
-
-resource privateDnsZoneForAgentsvc 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: 'privatelink.${zones[3]}'
-}
-
-resource privateDnsZoneForBlob 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-  name: 'privatelink.${zones[4]}'
-}
-
 resource pvtEndpointDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
   parent: peAmpls
   name: 'pvtEndpointDnsGroupForAmpls'
@@ -123,31 +111,31 @@ resource pvtEndpointDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/private
       {
         name: 'config1'
         properties: {
-          privateDnsZoneId: privateDnsZoneForMonitor.id
+          privateDnsZoneId: privateDnsZoneForAmpls[0].id
         }
       }
       {
         name: 'config2'
         properties: {
-          privateDnsZoneId: privateDnsZoneForOms.id
+          privateDnsZoneId: privateDnsZoneForAmpls[1].id
         }
       }
       {
         name: 'config3'
         properties: {
-          privateDnsZoneId: privateDnsZoneForOds.id
+          privateDnsZoneId: privateDnsZoneForAmpls[2].id
         }
       }
       {
         name: 'config4'
         properties: {
-          privateDnsZoneId: privateDnsZoneForAgentsvc.id
+          privateDnsZoneId: privateDnsZoneForAmpls[3].id
         }
       }
       {
         name: 'config5'
         properties: {
-          privateDnsZoneId: privateDnsZoneForBlob.id
+          privateDnsZoneId: privateDnsZoneForAmpls[4].id
         }
       }
     ]

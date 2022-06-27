@@ -19,15 +19,30 @@ var nsgName = 'nsg${suffix}'
 var vmName = 'vm${suffix}'
 
 // Create Resource Groups
-
 resource rgNet 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: 'rg-net-opslab'
+  name: 'rg-net-opslab-eval'
   location: envLocation
 }
 
 resource rgMgmt 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: 'rg-mgmt-opslab'
+  name: 'rg-mgmt-opslab-eval'
   location: envLocation
+}
+
+resource rgVm 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+  name: 'rg-vm-opslab-eval'
+  location: envLocation
+}
+
+
+// Create AutomationAccount
+module autoMgmt 'modules/management/automationAccount.bicep' = {
+  name: 'DeployAutomationAccount'
+  scope: rgMgmt
+  params: {
+    autoName: autoName
+    laLocation: envLocation
+  }
 }
 
 // Create Log Analytics and the resources for a closed infrastructure
@@ -41,29 +56,12 @@ module logMgmt 'modules/management/logAnalytics.bicep' = {
     dcrWinName: dcrWinName
     dcrLinuxName: dcrLinuxName
     laLocation: envLocation
+    autoId: autoMgmt.outputs.automationId
   }
 }
 
-module mmaDatasourceMgmt 'modules/management/mmaDatasource.bicep' = {
-  name: 'DeployDatasource'
-  scope: rgMgmt
-  params: {
-    logName: logName
-  }
-}
-
-// Create AutomationAccount
-module autoMgmt 'modules/management/automationAccount.bicep' = {
-  name: 'DeployAutomationAccount'
-  scope: rgMgmt
-  params: {
-    autoName: autoName
-    laLocation: envLocation
-  }
-}
 
 // Create Vnets and private Endpoint
-
 module vnet 'modules/network/vnet.bicep' = {
   name: 'DeployVNetAndPrivateEndpoint'
   scope: rgNet
@@ -75,6 +73,7 @@ module vnet 'modules/network/vnet.bicep' = {
   }
 }
 
+// Create Bastion
 module bastion 'modules/network/bastion.bicep' = {
   name: 'DeployBastion'
   scope: rgNet
@@ -86,10 +85,10 @@ module bastion 'modules/network/bastion.bicep' = {
   }
 }
 
-
+// Create four VMs and install each agents
 module vm 'modules/virtualMachine/vm.bicep' = {
   name: 'DeployAmaVmAndMmaVm'
-  scope: rgNet
+  scope: rgVm
   params: {
     vmLocation: envLocation
     nsgName: nsgName
@@ -99,9 +98,23 @@ module vm 'modules/virtualMachine/vm.bicep' = {
     vnetId: vnet.outputs.vnetId
     dceWinId: logMgmt.outputs.dceWinId
     dceLinuxId: logMgmt.outputs.dceLinuxId
-    logWorkspaceId: logMgmt.outputs.logWorkspaceId
-    logKey: logMgmt.outputs.logKey
     dcrWinId: logMgmt.outputs.dcrWinId
     dcrLinuxId: logMgmt.outputs.dcrLinuxId
+    logName: logName
   }
+}
+
+// Enable Update Management
+module updateManagementMgmt 'modules/management/updateManagement.bicep' = {
+  name: 'EnableUpdateManagement'
+  scope: rgMgmt
+  params: {
+    logName: logName
+    laLocation: envLocation
+    loganalyticsId: logMgmt.outputs.loganalyticsId
+  }
+  dependsOn: [
+    logMgmt
+    autoMgmt
+  ]
 }

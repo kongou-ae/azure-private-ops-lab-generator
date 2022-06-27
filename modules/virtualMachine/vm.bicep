@@ -6,12 +6,11 @@ param vnetId string
 param nsgName string
 param vmName string
 param numberOfVms int = 4
-param logWorkspaceId string
-param logKey string
 param dcrWinId string
 param dcrLinuxId string
 param dceWinId string
 param dceLinuxId string
+param logName string
 
 
 resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
@@ -20,6 +19,19 @@ resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   properties: {
     securityRules: [
       {
+        name: 'Out-Allow-Arm'
+        properties: {
+          access: 'Allow'
+          direction: 'Outbound'
+          protocol: '*'
+          destinationAddressPrefix: 'AzureResourceManager'
+          destinationPortRange: '*'
+          priority: 150
+          sourceAddressPrefix: '192.168.0.0/16'
+          sourcePortRange: '*'
+        }
+      }
+      {
         name: 'Out-Deny-Internet'
         properties: {
           access: 'Deny'
@@ -27,7 +39,7 @@ resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
           protocol: '*'
           destinationAddressPrefix: 'Internet'
           destinationPortRange: '*'
-          priority: 100
+          priority: 200
           sourceAddressPrefix: '192.168.0.0/16'
           sourcePortRange: '*'
         }
@@ -261,6 +273,7 @@ resource amaWindowsAgent 'Microsoft.Compute/virtualMachines/extensions@2021-11-0
   }
 }
 
+// Connect AMA to Log Analytics by Data connection rules and endpoints
 resource dceAssociationAmaUbVm01 'Microsoft.Insights/dataCollectionRuleAssociations@2021-04-01' = {
   scope: amaUbVm01
   name: 'configurationAccessEndpoint'
@@ -293,6 +306,13 @@ resource dcrAssociationAmaWinVm01 'Microsoft.Insights/dataCollectionRuleAssociat
   }
 }
 
+// Get the existing Log analytics for onboarding
+resource existinglog 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' existing= {
+  name: logName
+  scope: resourceGroup('rg-mgmt-opslab-eval')
+}
+
+// Connect MMA to Log analytics by onboarding
 resource omsOnboardingMmaUb01 'Microsoft.Compute/virtualMachines/extensions@2017-03-30' = {
   name: '${mmaUbVm01.name}/omsOnboarding'
   location: vmLocation
@@ -302,10 +322,10 @@ resource omsOnboardingMmaUb01 'Microsoft.Compute/virtualMachines/extensions@2017
     typeHandlerVersion: '1.13'
     autoUpgradeMinorVersion: true
     settings: {
-      workspaceId: logWorkspaceId
+      workspaceId: existinglog.properties.customerId
     }
     protectedSettings: {
-      workspaceKey: logKey
+      workspaceKey: (listKeys(existinglog.id, '2021-12-01-preview').primarySharedKey)
     }
   }
 }
@@ -319,10 +339,10 @@ resource omsOnboardingMmaWin01 'Microsoft.Compute/virtualMachines/extensions@201
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
     settings: {
-      workspaceId: logWorkspaceId
+      workspaceId: existinglog.properties.customerId
     }
     protectedSettings: {
-      workspaceKey: logKey
+      workspaceKey: (listKeys(existinglog.id, '2021-12-01-preview').primarySharedKey)
     }
   }
 }
