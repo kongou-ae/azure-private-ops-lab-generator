@@ -1,6 +1,6 @@
 # azure-private-ops-lab-generator
 
-This repository is the sample Bicep files for creating the environment which you can evaluate Azure Monitor Agent(AMA) and Microsoft Monitoring Agent(MMA) in. Each Agents connects to Log Analytics through Private Endpoint.
+This repository is the sample Bicep files for creating the environment which you can evaluate Azure Monitor Agent(AMA) and Microsoft Monitoring Agent(MMA) in. Each Agents connect to Log Analytics through Private Endpoint.
 
 This bicep creates the following resources.
 
