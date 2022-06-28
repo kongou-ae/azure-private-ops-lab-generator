@@ -7,6 +7,11 @@ This bicep creates the following resources.
 ![](./docs/diag.svg)
 
 # Usage
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkongou-ae%2Fazure-private-ops-lab-generator%2Fmain%2Fdocs%2Fmain.json)
+
+or
+
 1. Clone this repository
 1. Edit `param.json.template` and change a file name from `param.json.template` to `param.json`
 1. Deploy this template into subscription by using a command like `New-AzSubscriptionDeployment`
