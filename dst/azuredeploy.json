@@ -1,0 +1,2003 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.7.4.23292",
+      "templateHash": "9713099940550780033"
+    }
+  },
+  "parameters": {
+    "envLocation": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "secureString"
+    }
+  },
+  "variables": {
+    "suffix": "-pops-eval",
+    "vnetName": "[format('vnet{0}', variables('suffix'))]",
+    "logName": "[format('log{0}', variables('suffix'))]",
+    "autoName": "[format('auto{0}', variables('suffix'))]",
+    "amplsName": "[format('ampls{0}', variables('suffix'))]",
+    "dceName": "[format('dce{0}', variables('suffix'))]",
+    "dcrWinName": "[format('dcrWin{0}', variables('suffix'))]",
+    "dcrLinuxName": "[format('dcrLinux{0}', variables('suffix'))]",
+    "peAmplsName": "[format('peAmpls{0}', variables('suffix'))]",
+    "peAutoName": "[format('peAuto{0}', variables('suffix'))]",
+    "basName": "[format('bas{0}', variables('suffix'))]",
+    "nsgName": "[format('nsg{0}', variables('suffix'))]",
+    "vmName": "[format('vm{0}', variables('suffix'))]",
+    "fwName": "[format('fw{0}', variables('suffix'))]",
+    "rtName": "[format('rt{0}', variables('suffix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-01-01",
+      "name": "rg-net-opslab-eval",
+      "location": "[parameters('envLocation')]"
+    },
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-01-01",
+      "name": "rg-mgmt-opslab-eval",
+      "location": "[parameters('envLocation')]"
+    },
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-01-01",
+      "name": "rg-vm-opslab-eval",
+      "location": "[parameters('envLocation')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployAutomationAccount",
+      "resourceGroup": "rg-mgmt-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "autoName": {
+            "value": "[variables('autoName')]"
+          },
+          "laLocation": {
+            "value": "[parameters('envLocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "8053529810073503495"
+            }
+          },
+          "parameters": {
+            "laLocation": {
+              "type": "string"
+            },
+            "autoName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Automation/automationAccounts",
+              "apiVersion": "2021-06-22",
+              "name": "[parameters('autoName')]",
+              "location": "[parameters('laLocation')]",
+              "properties": {
+                "sku": {
+                  "name": "Basic"
+                },
+                "publicNetworkAccess": false
+              }
+            }
+          ],
+          "outputs": {
+            "automationId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Automation/automationAccounts', parameters('autoName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-mgmt-opslab-eval')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployLogAnalytics",
+      "resourceGroup": "rg-mgmt-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "logName": {
+            "value": "[variables('logName')]"
+          },
+          "amplsName": {
+            "value": "[variables('amplsName')]"
+          },
+          "dceName": {
+            "value": "[variables('dceName')]"
+          },
+          "dcrWinName": {
+            "value": "[variables('dcrWinName')]"
+          },
+          "dcrLinuxName": {
+            "value": "[variables('dcrLinuxName')]"
+          },
+          "laLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "autoId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployAutomationAccount')).outputs.automationId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "18414229621097480266"
+            }
+          },
+          "parameters": {
+            "laLocation": {
+              "type": "string"
+            },
+            "logName": {
+              "type": "string"
+            },
+            "amplsName": {
+              "type": "string"
+            },
+            "dceName": {
+              "type": "string"
+            },
+            "dcrWinName": {
+              "type": "string"
+            },
+            "dcrLinuxName": {
+              "type": "string"
+            },
+            "autoId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2021-12-01-preview",
+              "name": "[parameters('logName')]",
+              "location": "[parameters('laLocation')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "publicNetworkAccessForIngestion": "Disabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/linkedServices",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'Automation')]",
+              "properties": {
+                "resourceId": "[parameters('autoId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "microsoft.insights/privateLinkScopes",
+              "apiVersion": "2021-07-01-preview",
+              "name": "[parameters('amplsName')]",
+              "location": "global",
+              "properties": {
+                "accessModeSettings": {
+                  "ingestionAccessMode": "PrivateOnly",
+                  "queryAccessMode": "Open"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionEndpoints",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}-win', parameters('dceName'))]",
+              "location": "[parameters('laLocation')]",
+              "kind": "Windows",
+              "properties": {
+                "networkAcls": {
+                  "publicNetworkAccess": "Disabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionEndpoints",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}-linux', parameters('dceName'))]",
+              "location": "[parameters('laLocation')]",
+              "kind": "Linux",
+              "properties": {
+                "networkAcls": {
+                  "publicNetworkAccess": "Disabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRules",
+              "apiVersion": "2021-04-01",
+              "name": "[parameters('dcrWinName')]",
+              "location": "[parameters('laLocation')]",
+              "kind": "Windows",
+              "properties": {
+                "dataSources": {
+                  "performanceCounters": [
+                    {
+                      "name": "Microsoft-Perf",
+                      "streams": [
+                        "Microsoft-Perf"
+                      ],
+                      "samplingFrequencyInSeconds": 30,
+                      "counterSpecifiers": [
+                        "\\Processor Information(_Total)\\% Processor Time",
+                        "\\Processor Information(_Total)\\% Privileged Time",
+                        "\\Processor Information(_Total)\\% User Time",
+                        "\\Processor Information(_Total)\\Processor Frequency",
+                        "\\System\\Processes",
+                        "\\Process(_Total)\\Thread Count",
+                        "\\Process(_Total)\\Handle Count",
+                        "\\System\\System Up Time",
+                        "\\System\\Context Switches/sec",
+                        "\\System\\Processor Queue Length",
+                        "\\Memory\\% Committed Bytes In Use",
+                        "\\Memory\\Available Bytes",
+                        "\\Memory\\Committed Bytes",
+                        "\\Memory\\Cache Bytes",
+                        "\\Memory\\Pool Paged Bytes",
+                        "\\Memory\\Pool Nonpaged Bytes",
+                        "\\Memory\\Pages/sec",
+                        "\\Memory\\Page Faults/sec",
+                        "\\Process(_Total)\\Working Set",
+                        "\\Process(_Total)\\Working Set - Private",
+                        "\\LogicalDisk(_Total)\\% Disk Time",
+                        "\\LogicalDisk(_Total)\\% Disk Read Time",
+                        "\\LogicalDisk(_Total)\\% Disk Write Time",
+                        "\\LogicalDisk(_Total)\\% Idle Time",
+                        "\\LogicalDisk(_Total)\\Disk Bytes/sec",
+                        "\\LogicalDisk(_Total)\\Disk Read Bytes/sec",
+                        "\\LogicalDisk(_Total)\\Disk Write Bytes/sec",
+                        "\\LogicalDisk(_Total)\\Disk Transfers/sec",
+                        "\\LogicalDisk(_Total)\\Disk Reads/sec",
+                        "\\LogicalDisk(_Total)\\Disk Writes/sec",
+                        "\\LogicalDisk(_Total)\\Avg. Disk sec/Transfer",
+                        "\\LogicalDisk(_Total)\\Avg. Disk sec/Read",
+                        "\\LogicalDisk(_Total)\\Avg. Disk sec/Write",
+                        "\\LogicalDisk(_Total)\\Avg. Disk Queue Length",
+                        "\\LogicalDisk(_Total)\\Avg. Disk Read Queue Length",
+                        "\\LogicalDisk(_Total)\\Avg. Disk Write Queue Length",
+                        "\\LogicalDisk(_Total)\\% Free Space",
+                        "\\LogicalDisk(_Total)\\Free Megabytes",
+                        "\\Network Interface(*)\\Bytes Total/sec",
+                        "\\Network Interface(*)\\Bytes Sent/sec",
+                        "\\Network Interface(*)\\Bytes Received/sec",
+                        "\\Network Interface(*)\\Packets/sec",
+                        "\\Network Interface(*)\\Packets Sent/sec",
+                        "\\Network Interface(*)\\Packets Received/sec",
+                        "\\Network Interface(*)\\Packets Outbound Errors",
+                        "\\Network Interface(*)\\Packets Received Errors"
+                      ]
+                    }
+                  ],
+                  "windowsEventLogs": [
+                    {
+                      "name": "Microsoft-Event",
+                      "streams": [
+                        "Microsoft-Event"
+                      ],
+                      "xPathQueries": [
+                        "Application!*[System[(Level=1 or Level=2 or Level=3 or Level=4)]]",
+                        "Security!*[System[(band(Keywords13510798882111488))]]",
+                        "System!*[System[(Level=1 or Level=2 or Level=3 or Level=4)]]"
+                      ]
+                    }
+                  ]
+                },
+                "destinations": {
+                  "logAnalytics": [
+                    {
+                      "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]",
+                      "name": "log-pops-eval"
+                    }
+                  ]
+                },
+                "dataFlows": [
+                  {
+                    "streams": [
+                      "Microsoft-Perf"
+                    ],
+                    "destinations": [
+                      "log-pops-eval"
+                    ]
+                  },
+                  {
+                    "streams": [
+                      "Microsoft-Event"
+                    ],
+                    "destinations": [
+                      "log-pops-eval"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRules",
+              "apiVersion": "2021-04-01",
+              "name": "[parameters('dcrLinuxName')]",
+              "location": "[parameters('laLocation')]",
+              "kind": "Linux",
+              "properties": {
+                "dataSources": {
+                  "performanceCounters": [
+                    {
+                      "name": "Microsoft-Perf",
+                      "streams": [
+                        "Microsoft-Perf"
+                      ],
+                      "samplingFrequencyInSeconds": 30,
+                      "counterSpecifiers": [
+                        "Logical Disk(*)\\Free Megabytes",
+                        "Logical Disk(*)\\% Free Space",
+                        "Processor(*)\\% Processor Time",
+                        "Memory(*)\\Available MBytes Memory",
+                        "Memory(*)\\% Available Memory",
+                        "Memory(*)\\Used Memory MBytes",
+                        "Memory(*)\\% Used Memory"
+                      ]
+                    }
+                  ],
+                  "syslog": [
+                    {
+                      "streams": [
+                        "Microsoft-Syslog"
+                      ],
+                      "name": "Microsoft-Syslog-syslog",
+                      "facilityNames": [
+                        "syslog"
+                      ],
+                      "logLevels": [
+                        "Info"
+                      ]
+                    },
+                    {
+                      "streams": [
+                        "Microsoft-Syslog"
+                      ],
+                      "name": "Microsoft-Syslog-daemon",
+                      "facilityNames": [
+                        "daemon"
+                      ],
+                      "logLevels": [
+                        "Info"
+                      ]
+                    }
+                  ]
+                },
+                "destinations": {
+                  "logAnalytics": [
+                    {
+                      "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]",
+                      "name": "log-pops-eval"
+                    }
+                  ]
+                },
+                "dataFlows": [
+                  {
+                    "streams": [
+                      "Microsoft-Perf"
+                    ],
+                    "destinations": [
+                      "log-pops-eval"
+                    ]
+                  },
+                  {
+                    "streams": [
+                      "Microsoft-Syslog"
+                    ],
+                    "destinations": [
+                      "log-pops-eval"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/privateLinkScopes/scopedResources",
+              "apiVersion": "2021-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('amplsName'), format('amplslink_{0}', parameters('logName')))]",
+              "properties": {
+                "linkedResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('microsoft.insights/privateLinkScopes', parameters('amplsName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/privateLinkScopes/scopedResources",
+              "apiVersion": "2021-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('amplsName'), format('amplslink_{0}-win', parameters('dceName')))]",
+              "properties": {
+                "linkedResourceId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-win', parameters('dceName')))]"
+              },
+              "dependsOn": [
+                "[resourceId('microsoft.insights/privateLinkScopes', parameters('amplsName'))]",
+                "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-win', parameters('dceName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/privateLinkScopes/scopedResources",
+              "apiVersion": "2021-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('amplsName'), format('amplslink_{0}-linux', parameters('dceName')))]",
+              "properties": {
+                "linkedResourceId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-linux', parameters('dceName')))]"
+              },
+              "dependsOn": [
+                "[resourceId('microsoft.insights/privateLinkScopes', parameters('amplsName'))]",
+                "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-linux', parameters('dceName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsEventSystem')]",
+              "kind": "WindowsEvent",
+              "properties": {
+                "eventLogName": "System",
+                "eventTypes": [
+                  {
+                    "eventType": "Error"
+                  },
+                  {
+                    "eventType": "Warning"
+                  },
+                  {
+                    "eventType": "Information"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsEventApplication')]",
+              "kind": "WindowsEvent",
+              "properties": {
+                "eventLogName": "Application",
+                "eventTypes": [
+                  {
+                    "eventType": "Error"
+                  },
+                  {
+                    "eventType": "Warning"
+                  },
+                  {
+                    "eventType": "Information"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'LinuxSyslogCollection')]",
+              "kind": "LinuxSyslogCollection",
+              "properties": {
+                "state": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'LinuxSyslogDaemon')]",
+              "kind": "LinuxSyslog",
+              "properties": {
+                "syslogName": "daemon",
+                "syslogSeverities": [
+                  {
+                    "severity": "emerg"
+                  },
+                  {
+                    "severity": "alert"
+                  },
+                  {
+                    "severity": "crit"
+                  },
+                  {
+                    "severity": "err"
+                  },
+                  {
+                    "severity": "warning"
+                  },
+                  {
+                    "severity": "notice"
+                  },
+                  {
+                    "severity": "info"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'LinuxSyslogSyslog')]",
+              "kind": "LinuxSyslog",
+              "properties": {
+                "syslogName": "syslog",
+                "syslogSeverities": [
+                  {
+                    "severity": "emerg"
+                  },
+                  {
+                    "severity": "alert"
+                  },
+                  {
+                    "severity": "crit"
+                  },
+                  {
+                    "severity": "err"
+                  },
+                  {
+                    "severity": "warning"
+                  },
+                  {
+                    "severity": "notice"
+                  },
+                  {
+                    "severity": "info"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsPerfMemoryAvailableBytes')]",
+              "kind": "WindowsPerformanceCounter",
+              "properties": {
+                "objectName": "Memory",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "counterName": "Available MBytes"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsPerfMemoryPercentageBytes')]",
+              "kind": "WindowsPerformanceCounter",
+              "properties": {
+                "objectName": "Memory",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "counterName": "% Committed Bytes in Use"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsPerfProcessorPercentage')]",
+              "kind": "WindowsPerformanceCounter",
+              "properties": {
+                "objectName": "Processor",
+                "instanceName": "_Total",
+                "intervalSeconds": 10,
+                "counterName": "% Processor Time"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsPerfDiskFreeSpacePercentage')]",
+              "kind": "WindowsPerformanceCounter",
+              "properties": {
+                "objectName": "Logical Disk\t",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "counterName": "% Free Space"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'WindowsPerfDiskUsedSpacePercentage')]",
+              "kind": "WindowsPerformanceCounter",
+              "properties": {
+                "objectName": "Logical Disk\t",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "counterName": "% Used Space"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'LinuxPerformanceLogicalDisk')]",
+              "kind": "LinuxPerformanceObject",
+              "properties": {
+                "objectName": "Logical Disk",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "performanceCounters": [
+                  {
+                    "counterName": "Free Megabytes"
+                  },
+                  {
+                    "counterName": "% Used Space"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+              "apiVersion": "2020-08-01",
+              "name": "[format('{0}/{1}', parameters('logName'), 'LinuxPerformanceProcessor')]",
+              "kind": "LinuxPerformanceObject",
+              "properties": {
+                "objectName": "Processor",
+                "instanceName": "*",
+                "intervalSeconds": 10,
+                "performanceCounters": [
+                  {
+                    "counterName": "% Processor Time"
+                  },
+                  {
+                    "counterName": "% Privileged Time"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "loganalyticsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logName'))]"
+            },
+            "amplsId": {
+              "type": "string",
+              "value": "[resourceId('microsoft.insights/privateLinkScopes', parameters('amplsName'))]"
+            },
+            "dcrWinId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionRules', parameters('dcrWinName'))]"
+            },
+            "dcrLinuxId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionRules', parameters('dcrLinuxName'))]"
+            },
+            "dceWinId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-win', parameters('dceName')))]"
+            },
+            "dceLinuxId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-linux', parameters('dceName')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployAutomationAccount')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-mgmt-opslab-eval')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployVNetAndPrivateEndpoint",
+      "resourceGroup": "rg-net-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "netLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "peAmplsName": {
+            "value": "[variables('peAmplsName')]"
+          },
+          "amplsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.amplsId.value]"
+          },
+          "peAutoName": {
+            "value": "[variables('peAutoName')]"
+          },
+          "autoId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployAutomationAccount')).outputs.automationId.value]"
+          },
+          "rtName": {
+            "value": "[variables('rtName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "13854535811175755999"
+            }
+          },
+          "parameters": {
+            "netLocation": {
+              "type": "string"
+            },
+            "amplsId": {
+              "type": "string"
+            },
+            "autoId": {
+              "type": "string"
+            },
+            "vnetName": {
+              "type": "string"
+            },
+            "peAmplsName": {
+              "type": "string"
+            },
+            "peAutoName": {
+              "type": "string"
+            },
+            "rtName": {
+              "type": "string"
+            },
+            "zones": {
+              "type": "array",
+              "defaultValue": [
+                "monitor.azure.com",
+                "oms.opinsights.azure.com",
+                "ods.opinsights.azure.com",
+                "agentsvc.azure-automation.net",
+                "[format('blob.{0}', environment().suffixes.storage)]"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/routeTables",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('rtName')]",
+              "location": "[parameters('netLocation')]",
+              "properties": {
+                "routes": [
+                  {
+                    "id": "100",
+                    "name": "defaultRoute",
+                    "properties": {
+                      "addressPrefix": "0.0.0.0/0",
+                      "nextHopType": "VirtualAppliance",
+                      "nextHopIpAddress": "192.168.2.4"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('netLocation')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "192.168.0.0/16"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "AzureFirewallSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.2.0/24"
+                    }
+                  },
+                  {
+                    "name": "AzureBastionSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.3.0/24"
+                    }
+                  },
+                  {
+                    "name": "IaasSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.4.0/24",
+                      "routeTable": {
+                        "id": "[resourceId('Microsoft.Network/routeTables', parameters('rtName'))]"
+                      }
+                    }
+                  },
+                  {
+                    "name": "peAmplsSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.5.0/24"
+                    }
+                  },
+                  {
+                    "name": "peAutoSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.6.0/24"
+                    }
+                  },
+                  {
+                    "name": "peArmSubnet",
+                    "properties": {
+                      "addressPrefix": "192.168.7.0/24"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/routeTables', parameters('rtName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('peAmplsName')]",
+              "location": "[parameters('netLocation')]",
+              "properties": {
+                "subnet": {
+                  "id": "[format('{0}/subnets/peAmplsSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "[format('conn-{0}', parameters('peAmplsName'))]",
+                    "properties": {
+                      "groupIds": [
+                        "azuremonitor"
+                      ],
+                      "privateLinkServiceId": "[parameters('amplsId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "privateDnsZoneForAmpls",
+                "count": "[length(parameters('zones'))]"
+              },
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[format('privatelink.{0}', parameters('zones')[copyIndex()])]",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "copy": {
+                "name": "privateDnsZoneForAmplsVnetLink",
+                "count": "[length(parameters('zones'))]"
+              },
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.{0}', parameters('zones')[copyIndex()]), format('privateDnsZoneForAmplsVnetLink{0}', copyIndex()))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[copyIndex()]))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2021-05-01",
+              "name": "[format('{0}/{1}', parameters('peAmplsName'), 'pvtEndpointDnsGroupForAmpls')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[0]))]"
+                    }
+                  },
+                  {
+                    "name": "config2",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[1]))]"
+                    }
+                  },
+                  {
+                    "name": "config3",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[2]))]"
+                    }
+                  },
+                  {
+                    "name": "config4",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[3]))]"
+                    }
+                  },
+                  {
+                    "name": "config5",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[4]))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('peAmplsName'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[4]))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[3]))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[0]))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[1]))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[2]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('peAutoName')]",
+              "location": "[parameters('netLocation')]",
+              "properties": {
+                "subnet": {
+                  "id": "[format('{0}/subnets/peAutoSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "[format('conn-{0}', parameters('peAutoName'))]",
+                    "properties": {
+                      "groupIds": [
+                        "DSCAndHybridWorker"
+                      ],
+                      "privateLinkServiceId": "[parameters('autoId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.azure-automation.net",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2021-05-01",
+              "name": "[format('{0}/{1}', parameters('peAutoName'), 'pvtEndpointDnsGroupForAuto')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-automation.net')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('peAutoName'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-automation.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.azure-automation.net', 'privateDnsZoneForAutoVnetLink')]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-automation.net')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployAutomationAccount')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-net-opslab-eval')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployAzFirewall",
+      "resourceGroup": "rg-net-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "fwLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "fwName": {
+            "value": "[variables('fwName')]"
+          },
+          "vnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')).outputs.vnetId.value]"
+          },
+          "loganalyticsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.loganalyticsId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "14053084560591565366"
+            }
+          },
+          "parameters": {
+            "fwLocation": {
+              "type": "string"
+            },
+            "fwName": {
+              "type": "string"
+            },
+            "vnetId": {
+              "type": "string"
+            },
+            "loganalyticsId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2021-08-01",
+              "name": "[format('pip-{0}', parameters('fwName'))]",
+              "location": "[parameters('fwLocation')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies",
+              "apiVersion": "2021-08-01",
+              "name": "[format('afwp-{0}', parameters('fwName'))]",
+              "location": "[parameters('fwLocation')]",
+              "properties": {
+                "sku": {
+                  "tier": "Standard"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+              "apiVersion": "2021-08-01",
+              "name": "[format('{0}/{1}', format('afwp-{0}', parameters('fwName')), 'DefaultApplicationRuleCollectionGroup')]",
+              "properties": {
+                "priority": 300,
+                "ruleCollections": [
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "name": "Permit-Outbound-Web-by-FQDNtag",
+                    "priority": 310,
+                    "rules": [
+                      {
+                        "ruleType": "ApplicationRule",
+                        "sourceAddresses": [
+                          "192.168.0.0/16"
+                        ],
+                        "name": "WindowsUpdate",
+                        "protocols": [
+                          {
+                            "port": 80,
+                            "protocolType": "Http"
+                          },
+                          {
+                            "port": 443,
+                            "protocolType": "Https"
+                          }
+                        ],
+                        "fqdnTags": [
+                          "WindowsUpdate"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                    "action": {
+                      "type": "Allow"
+                    },
+                    "name": "Permit-Outbound-Web-by-FQDN",
+                    "priority": 320,
+                    "rules": [
+                      {
+                        "ruleType": "ApplicationRule",
+                        "sourceAddresses": [
+                          "192.168.0.0/16"
+                        ],
+                        "name": "SpecificFqdn",
+                        "protocols": [
+                          {
+                            "port": 80,
+                            "protocolType": "Http"
+                          },
+                          {
+                            "port": 443,
+                            "protocolType": "Https"
+                          }
+                        ],
+                        "targetFqdns": [
+                          "[replace(replace(environment().resourceManager, 'https://', ''), '/', '')]",
+                          "azure.archive.ubuntu.com"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies', format('afwp-{0}', parameters('fwName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/azureFirewalls",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('fwName')]",
+              "location": "[parameters('fwLocation')]",
+              "properties": {
+                "sku": {
+                  "name": "AZFW_VNet",
+                  "tier": "Standard"
+                },
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('fwName')))]"
+                      },
+                      "subnet": {
+                        "id": "[format('{0}/subnets/AzureFirewallSubnet', parameters('vnetId'))]"
+                      }
+                    }
+                  }
+                ],
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/firewallPolicies', format('afwp-{0}', parameters('fwName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', format('afwp-{0}', parameters('fwName')), 'DefaultApplicationRuleCollectionGroup')]",
+                "[resourceId('Microsoft.Network/firewallPolicies', format('afwp-{0}', parameters('fwName')))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('fwName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/azureFirewalls/{0}', parameters('fwName'))]",
+              "name": "hubFirewallDiagsetting",
+              "properties": {
+                "workspaceId": "[parameters('loganalyticsId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/azureFirewalls', parameters('fwName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-net-opslab-eval')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployBastion",
+      "resourceGroup": "rg-net-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "bastionLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "basName": {
+            "value": "[variables('basName')]"
+          },
+          "netVnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')).outputs.vnetId.value]"
+          },
+          "mgmtLoganalyticsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.loganalyticsId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "14596232553836084010"
+            }
+          },
+          "parameters": {
+            "bastionLocation": {
+              "type": "string"
+            },
+            "netVnetId": {
+              "type": "string"
+            },
+            "mgmtLoganalyticsId": {
+              "type": "string"
+            },
+            "basName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2021-08-01",
+              "name": "[format('pip-{0}', parameters('basName'))]",
+              "location": "[parameters('bastionLocation')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/bastionHosts",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('basName')]",
+              "location": "[parameters('bastionLocation')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "disableCopyPaste": false,
+                "enableFileCopy": true,
+                "enableIpConnect": true,
+                "enableShareableLink": false,
+                "enableTunneling": true,
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('basName')))]"
+                      },
+                      "subnet": {
+                        "id": "[format('{0}/subnets/AzureBastionSubnet', parameters('netVnetId'))]"
+                      },
+                      "privateIPAllocationMethod": "Dynamic"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('basName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Network/bastionHosts/{0}', parameters('basName'))]",
+              "name": "netBastionDiagsetting",
+              "properties": {
+                "workspaceId": "[parameters('mgmtLoganalyticsId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/bastionHosts', parameters('basName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-net-opslab-eval')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "DeployAmaVmAndMmaVm",
+      "resourceGroup": "rg-vm-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vmLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "nsgName": {
+            "value": "[variables('nsgName')]"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "vnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')).outputs.vnetId.value]"
+          },
+          "dceWinId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.dceWinId.value]"
+          },
+          "dceLinuxId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.dceLinuxId.value]"
+          },
+          "dcrWinId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.dcrWinId.value]"
+          },
+          "dcrLinuxId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.dcrLinuxId.value]"
+          },
+          "logName": {
+            "value": "[variables('logName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "15509914405157578271"
+            }
+          },
+          "parameters": {
+            "vmLocation": {
+              "type": "string"
+            },
+            "adminUserName": {
+              "type": "string"
+            },
+            "adminPassword": {
+              "type": "secureString"
+            },
+            "vnetId": {
+              "type": "string"
+            },
+            "nsgName": {
+              "type": "string"
+            },
+            "vmName": {
+              "type": "string"
+            },
+            "numberOfVms": {
+              "type": "int",
+              "defaultValue": 4
+            },
+            "dcrWinId": {
+              "type": "string"
+            },
+            "dcrLinuxId": {
+              "type": "string"
+            },
+            "dceWinId": {
+              "type": "string"
+            },
+            "dceLinuxId": {
+              "type": "string"
+            },
+            "logName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('nsgName')]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "Out-Allow-Arm",
+                    "properties": {
+                      "access": "Allow",
+                      "direction": "Outbound",
+                      "protocol": "*",
+                      "destinationAddressPrefix": "AzureResourceManager",
+                      "destinationPortRange": "*",
+                      "priority": 150,
+                      "sourceAddressPrefix": "192.168.0.0/16",
+                      "sourcePortRange": "*"
+                    }
+                  },
+                  {
+                    "name": "Out-Deny-Internet",
+                    "properties": {
+                      "access": "Deny",
+                      "direction": "Outbound",
+                      "protocol": "*",
+                      "destinationAddressPrefix": "Internet",
+                      "destinationPortRange": "*",
+                      "priority": 200,
+                      "sourceAddressPrefix": "192.168.0.0/16",
+                      "sourcePortRange": "*"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "copy": {
+                "name": "vmForNic",
+                "count": "[length(range(1, parameters('numberOfVms')))]"
+              },
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2021-08-01",
+              "name": "[format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[copyIndex()])]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "primary": true,
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[format('192.168.4.10{0}', range(1, parameters('numberOfVms'))[copyIndex()])]",
+                      "subnet": {
+                        "id": "[format('{0}/subnets/iaasSubnet', parameters('vnetId'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}-amaub01', parameters('vmName'))]",
+              "location": "[parameters('vmLocation')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "osProfile": {
+                  "computerName": "amaUbVm01",
+                  "adminUsername": "[parameters('adminUserName')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B1ms"
+                },
+                "storageProfile": {
+                  "osDisk": {
+                    "osType": "Linux",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  },
+                  "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "0001-com-ubuntu-server-jammy",
+                    "sku": "22_04-lts-gen2",
+                    "version": "latest"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[0]))]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[0]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}-mmaub01', parameters('vmName'))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "osProfile": {
+                  "computerName": "mmaUbVm01",
+                  "adminUsername": "[parameters('adminUserName')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B1ms"
+                },
+                "storageProfile": {
+                  "osDisk": {
+                    "osType": "Linux",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  },
+                  "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "0001-com-ubuntu-server-focal",
+                    "sku": "20_04-lts-gen2",
+                    "version": "latest"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[1]))]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[1]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}-mmawin01', parameters('vmName'))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "osProfile": {
+                  "computerName": "mmaWinVm01",
+                  "adminUsername": "[parameters('adminUserName')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                    "patchSettings": {
+                      "patchMode": "AutomaticByOS"
+                    }
+                  }
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B2ms"
+                },
+                "storageProfile": {
+                  "osDisk": {
+                    "osType": "Windows",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  },
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2019-datacenter-core-smalldisk-g2",
+                    "version": "latest"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[2]))]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[2]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}-amawin01', parameters('vmName'))]",
+              "location": "[parameters('vmLocation')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "osProfile": {
+                  "computerName": "amaWinVm01",
+                  "adminUsername": "[parameters('adminUserName')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                    "patchSettings": {
+                      "patchMode": "AutomaticByOS"
+                    }
+                  }
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B2ms"
+                },
+                "storageProfile": {
+                  "osDisk": {
+                    "osType": "Windows",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  },
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2019-datacenter-core-smalldisk-g2",
+                    "version": "latest"
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[3]))]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-0{1}', parameters('vmName'), range(1, parameters('numberOfVms'))[3]))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/AzureMonitorLinuxAgent', format('{0}-amaub01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.Azure.Monitor",
+                "type": "AzureMonitorLinuxAgent",
+                "typeHandlerVersion": "1.5",
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amaub01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/AzureMonitorWindowsAgent', format('{0}-amawin01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.Azure.Monitor",
+                "type": "AzureMonitorWindowsAgent",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amawin01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2021-04-01",
+              "scope": "[format('Microsoft.Compute/virtualMachines/{0}', format('{0}-amaub01', parameters('vmName')))]",
+              "name": "configurationAccessEndpoint",
+              "properties": {
+                "dataCollectionEndpointId": "[parameters('dceLinuxId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amaub01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2021-04-01",
+              "scope": "[format('Microsoft.Compute/virtualMachines/{0}', format('{0}-amaub01', parameters('vmName')))]",
+              "name": "rule",
+              "properties": {
+                "dataCollectionRuleId": "[parameters('dcrLinuxId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amaub01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2021-04-01",
+              "scope": "[format('Microsoft.Compute/virtualMachines/{0}', format('{0}-amawin01', parameters('vmName')))]",
+              "name": "configurationAccessEndpoint",
+              "properties": {
+                "dataCollectionEndpointId": "[parameters('dceWinId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amawin01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2021-04-01",
+              "scope": "[format('Microsoft.Compute/virtualMachines/{0}', format('{0}-amawin01', parameters('vmName')))]",
+              "name": "rule",
+              "properties": {
+                "dataCollectionRuleId": "[parameters('dcrWinId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-amawin01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2017-03-30",
+              "name": "[format('{0}/omsOnboarding', format('{0}-mmaub01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "OmsAgentForLinux",
+                "typeHandlerVersion": "1.13",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "workspaceId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.OperationalInsights/workspaces', parameters('logName')), '2021-12-01-preview').customerId]"
+                },
+                "protectedSettings": {
+                  "workspaceKey": "[listKeys(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.OperationalInsights/workspaces', parameters('logName')), '2021-12-01-preview').primarySharedKey]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-mmaub01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2017-03-30",
+              "name": "[format('{0}/omsOnboarding', format('{0}-mmawin01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "MicrosoftMonitoringAgent",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "workspaceId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.OperationalInsights/workspaces', parameters('logName')), '2021-12-01-preview').customerId]"
+                },
+                "protectedSettings": {
+                  "workspaceKey": "[listKeys(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.OperationalInsights/workspaces', parameters('logName')), '2021-12-01-preview').primarySharedKey]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-mmawin01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/DependencyAgent', format('{0}-mmawin01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+                "type": "DependencyAgentWindows",
+                "typeHandlerVersion": "9.5",
+                "autoUpgradeMinorVersion": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-mmawin01', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/DependencyAgent', format('{0}-mmaub01', parameters('vmName')))]",
+              "location": "[parameters('vmLocation')]",
+              "properties": {
+                "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+                "type": "DependencyAgentLinux",
+                "typeHandlerVersion": "9.5",
+                "autoUpgradeMinorVersion": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-mmaub01', parameters('vmName')))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-vm-opslab-eval')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-net-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployVNetAndPrivateEndpoint')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "EnableUpdateManagement",
+      "resourceGroup": "rg-mgmt-opslab-eval",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "logName": {
+            "value": "[variables('logName')]"
+          },
+          "laLocation": {
+            "value": "[parameters('envLocation')]"
+          },
+          "loganalyticsId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')).outputs.loganalyticsId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.7.4.23292",
+              "templateHash": "9793478589192584523"
+            }
+          },
+          "parameters": {
+            "laLocation": {
+              "type": "string"
+            },
+            "logName": {
+              "type": "string"
+            },
+            "loganalyticsId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[format('Updates({0})', parameters('logName'))]",
+              "location": "[parameters('laLocation')]",
+              "properties": {
+                "workspaceResourceId": "[parameters('loganalyticsId')]"
+              },
+              "plan": {
+                "name": "[format('Updates({0})', parameters('logName'))]",
+                "promotionCode": "",
+                "product": "OMSGallery/Updates",
+                "publisher": "Microsoft"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployAutomationAccount')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'rg-mgmt-opslab-eval'), 'Microsoft.Resources/deployments', 'DeployLogAnalytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', 'rg-mgmt-opslab-eval')]"
+      ]
+    }
+  ]
+}
