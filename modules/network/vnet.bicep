@@ -209,4 +209,16 @@ resource peDnsGroupForAuto 'Microsoft.Network/privateEndpoints/privateDnsZoneGro
   }
 }
 
+resource privateDnsZoneForAutoVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: 'privateDnsZoneForAutoVnetLink'
+  location: 'global'
+  parent: privateDnsZoneForAuto
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnet.id
+    }
+  }
+}
+
 output vnetId string = vnet.id
