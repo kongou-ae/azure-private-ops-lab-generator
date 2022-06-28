@@ -20,7 +20,7 @@ resource hubFirewallPolicy 'Microsoft.Network/firewallPolicies@2021-08-01' = {
   location: fwLocation
   properties: {
     sku: {
-      tier: 'Premium'
+      tier: 'Standard'
     }
   }
 }
@@ -122,7 +122,7 @@ resource hubFirewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
   properties: {
     sku: {
       name: 'AZFW_VNet'
-      tier: 'Premium'
+      tier: 'Standard'
     }
     ipConfigurations: [
       {

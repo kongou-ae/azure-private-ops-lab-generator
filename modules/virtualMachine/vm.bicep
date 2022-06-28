@@ -12,7 +12,6 @@ param dceWinId string
 param dceLinuxId string
 param logName string
 
-
 resource NsgForVm 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   name: nsgName
   location: vmLocation
@@ -166,8 +165,7 @@ resource mmaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       adminPassword: adminPassword
       windowsConfiguration: {
         patchSettings: {
-          enableHotpatching: true
-          patchMode: 'AutomaticByPlatform'
+          patchMode: 'AutomaticByOS'
         }
       }
     }
@@ -185,7 +183,7 @@ resource mmaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: '2022-datacenter-azure-edition-core-smalldisk'
+        sku: '2019-datacenter-core-smalldisk-g2'
         version: 'latest'
       }
     }
@@ -215,8 +213,7 @@ resource amaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       adminPassword: adminPassword
       windowsConfiguration: {
         patchSettings: {
-          enableHotpatching: true
-          patchMode: 'AutomaticByPlatform'
+          patchMode: 'AutomaticByOS'
         }
       }
     }
@@ -234,7 +231,7 @@ resource amaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: '2022-datacenter-azure-edition-core-smalldisk'
+        sku: '2019-datacenter-core-smalldisk-g2'
         version: 'latest'
       }
     }
@@ -280,7 +277,7 @@ resource dceAssociationAmaUbVm01 'Microsoft.Insights/dataCollectionRuleAssociati
   scope: amaUbVm01
   name: 'configurationAccessEndpoint'
   properties: {
-     dataCollectionEndpointId: dceLinuxId
+    dataCollectionEndpointId: dceLinuxId
   }
 }
 
@@ -309,7 +306,7 @@ resource dcrAssociationAmaWinVm01 'Microsoft.Insights/dataCollectionRuleAssociat
 }
 
 // Get the existing Log analytics for onboarding
-resource existinglog 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' existing= {
+resource existinglog 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' existing = {
   name: logName
   scope: resourceGroup('rg-mgmt-opslab-eval')
 }
@@ -348,3 +345,26 @@ resource omsOnboardingMmaWin01 'Microsoft.Compute/virtualMachines/extensions@201
     }
   }
 }
+
+resource dependencyAgentMmaWin01 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = {
+  name: '${mmaWinVm01.name}/DependencyAgent'
+  location: vmLocation
+  properties: {
+    publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
+    type: 'DependencyAgentWindows'
+    typeHandlerVersion: '9.5'
+    autoUpgradeMinorVersion: true
+  }
+}
+
+resource dependencyAgentMmaUb01 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' = {
+  name: '${mmaUbVm01.name}/DependencyAgent'
+  location: vmLocation
+  properties: {
+    publisher: 'Microsoft.Azure.Monitoring.DependencyAgent'
+    type: 'DependencyAgentLinux'
+    typeHandlerVersion: '9.5'
+    autoUpgradeMinorVersion: true
+  }
+}
+
