@@ -65,9 +65,11 @@ resource vmForNic 'Microsoft.Network/networkInterfaces@2021-08-01' = [for i in r
         }
       }
     ]
+    /*
     networkSecurityGroup: {
       id: NsgForVm.id
     }
+    */
   }
 }]
 

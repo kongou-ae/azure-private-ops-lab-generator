@@ -18,6 +18,8 @@ var peAutoName = 'peAuto${suffix}'
 var basName = 'bas${suffix}'
 var nsgName = 'nsg${suffix}'
 var vmName = 'vm${suffix}'
+var fwName = 'fw${suffix}'
+var rtName = 'rt${suffix}'
 
 // Create Resource Groups
 resource rgNet 'Microsoft.Resources/resourceGroups@2021-01-01' = {
@@ -73,6 +75,20 @@ module vnet 'modules/network/vnet.bicep' = {
     amplsId: logMgmt.outputs.amplsId
     peAutoName: peAutoName
     autoId: autoMgmt.outputs.automationId
+    rtName:rtName
+  }
+}
+
+// Create Bastion
+
+module firewall 'modules/network/firewall.bicep' = {
+  name: 'DeployAzFirewall'
+  scope: rgNet
+  params: {
+    fwLocation: envLocation
+    fwName: fwName
+    vnetId: vnet.outputs.vnetId
+    loganalyticsId: logMgmt.outputs.loganalyticsId
   }
 }
 

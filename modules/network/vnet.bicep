@@ -4,6 +4,7 @@ param autoId string
 param vnetName string
 param peAmplsName string
 param peAutoName string
+param rtName string
 
 param zones array = [
   'monitor.azure.com'
@@ -12,6 +13,25 @@ param zones array = [
   'agentsvc.azure-automation.net'
   'blob.${environment().suffixes.storage}'
 ]
+
+
+resource routetable 'Microsoft.Network/routeTables@2021-08-01' = {
+  name: rtName
+  location: netLocation
+  properties: {
+    routes: [
+      {
+        id: '100'
+        name: 'defaultRoute'
+        properties: {
+          addressPrefix: '0.0.0.0/0'
+          nextHopType: 'VirtualAppliance'
+          nextHopIpAddress: '192.168.2.4'
+        }
+      }
+    ] 
+  }
+}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: vnetName
@@ -39,6 +59,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
         name: 'IaasSubnet'
         properties: {
           addressPrefix: '192.168.4.0/24'
+          routeTable: {
+             id: routetable.id
+          }
         }
       }
       {
@@ -104,7 +127,7 @@ resource privateDnsZoneForAmplsVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }]
 
-resource pvtEndpointDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+resource peDnsGroupForAmpls 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
   parent: peAmpls
   name: 'pvtEndpointDnsGroupForAmpls'
   properties: {
@@ -171,7 +194,7 @@ resource privateDnsZoneForAuto 'Microsoft.Network/privateDnsZones@2020-06-01' = 
   }
 }
 
-resource pvtEndpointDnsGroupForAuto 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
+resource peDnsGroupForAuto 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
   parent: peAuto
   name: 'pvtEndpointDnsGroupForAuto'
   properties: {
