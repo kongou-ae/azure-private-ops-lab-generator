@@ -40,13 +40,13 @@ jobs:
           # ARM template output path
           outputFilePath: ./dst/azuredeploy.json
 
-    - name: git setting
-      run: |
-        git config --local user.email "y.matsumoto.ae@gmail.com"
-        git config --local user.name "kongou-ae"
-    - name: Commit files
-      run: |
-        git add .
-        git commit -m "Build bicep files" -a
-        git pull
-        git push origin main
+      - name: git setting
+        run: |
+          git config --local user.email "y.matsumoto.ae@gmail.com"
+          git config --local user.name "kongou-ae"
+      - name: Commit files
+        run: |
+          git add 'dst/azuredeploy.json'
+          git commit -m "Build bicep files" -a
+          git pull
+          git push origin main
