@@ -6,13 +6,15 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]:
-      paths-ignore:
-        - 'dst/azuredeploy.json'
+    branches:
+      - main
+    paths-ignore:
+      - 'dst/azuredeploy.json'
   pull_request:
-    branches: [ "main" ]:
-      paths-ignore:
-        - 'dst/azuredeploy.json'
+    branches:
+      - main
+    paths-ignore:
+      - 'dst/azuredeploy.json'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
