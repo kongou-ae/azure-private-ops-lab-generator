@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.7.4.23292",
-      "templateHash": "15716814269986619524"
+      "templateHash": "8754207529652590993"
     }
   },
   "parameters": {
@@ -796,7 +796,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.7.4.23292",
-              "templateHash": "15462385707502608512"
+              "templateHash": "12312356384578395810"
             }
           },
           "parameters": {
@@ -1005,11 +1005,11 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/privateEndpoints', parameters('peAmplsName'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[3]))]",
                 "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[1]))]",
                 "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[2]))]",
-                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[3]))]",
-                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[0]))]",
-                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[4]))]"
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[4]))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.{0}', parameters('zones')[0]))]"
               ]
             },
             {
