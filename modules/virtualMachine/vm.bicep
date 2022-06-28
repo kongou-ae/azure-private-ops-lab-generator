@@ -93,7 +93,7 @@ resource amaUbVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         osType: 'Linux'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'Standard_LRS'
+          storageAccountType: 'StandardSSD_LRS'
         }
       }
       imageReference: {
@@ -133,7 +133,7 @@ resource mmaUbVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         osType: 'Linux'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'Standard_LRS'
+          storageAccountType: 'StandardSSD_LRS'
         }
       }
       imageReference: {
@@ -179,7 +179,7 @@ resource mmaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         osType: 'Windows'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'Standard_LRS'
+          storageAccountType: 'StandardSSD_LRS'
         }
       }
       imageReference: {
@@ -228,7 +228,7 @@ resource amaWinVm01 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         osType: 'Windows'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'Standard_LRS'
+          storageAccountType: 'StandardSSD_LRS'
         }
       }
       imageReference: {
