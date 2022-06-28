@@ -379,6 +379,12 @@ resource dataSourceLinuxSyslogSyslog 'Microsoft.OperationalInsights/workspaces/d
       {
         severity: 'warning'
       }
+      {
+        severity: 'notice'
+      }
+      {
+        severity: 'info'
+      }
     ]
   }
 }
