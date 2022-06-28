@@ -325,12 +325,12 @@ resource dataSourceLinuxSyslog 'Microsoft.OperationalInsights/workspaces/dataSou
   }
 }
 
-resource dataSourceLinuxSyslogKernel 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
+resource dataSourceLinuxSyslogDaemon 'Microsoft.OperationalInsights/workspaces/dataSources@2020-08-01' = {
   parent: log
   kind: 'LinuxSyslog'
-  name: 'LinuxSyslogKernel'
+  name: 'LinuxSyslogDaemon'
   properties: {
-    syslogName: 'kern'
+    syslogName: 'daemon'
     syslogSeverities: [
       {
         severity: 'emerg'
