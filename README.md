@@ -8,7 +8,7 @@ This bicep creates the following resources.
 
 # Usage
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkongou-ae%2Fazure-private-ops-lab-generator%2Fmain%2Fdist%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkongou-ae%2Fazure-private-ops-lab-generator%2Fmain%2Fdst%2Fazuredeploy.json)
 
 or
 
